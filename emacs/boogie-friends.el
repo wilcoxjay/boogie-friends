@@ -128,6 +128,12 @@ must an whole number of seconds.")
   "Storage for extra prover arguments.
 Only for temporary assignment of internal values")
 
+(defcustom boogie-friends-override-args-with-run-line nil
+  "If non-nil and if a RUN line is found at the beginning beginning
+of the file, use exactly the arguments found in the RUN line, instead
+of the usual arguments."
+  :group 'boogie-friends)
+
 (defvar boogie-friends--prover-running-in-foreground-p nil
   "Boolean flag indicating whether the prover is being explicitly invoked.
 If non-nil, background args will be omitted from prover invocations.")
@@ -197,13 +203,25 @@ greedily (the opening bracket is matched by \\s_).")
   "Retrieves the value of (boogie-friends-mode-var SUFFIX)."
   (symbol-value (boogie-friends-mode-var suffix)))
 
+(defun boogie-friends-parse-run-line-prover-args ()
+  "Try to parse prover args from a RUN line at the top of the buffer.
+Returns nil if a RUN line is not found or if parsing fails."
+  (save-excursion
+    (goto-char (point-min))
+    (-when-let (found (search-forward "// RUN:" (point-at-eol)))
+      (cl-loop while (re-search-forward "-\\S-*" (point-at-eol) t)
+               collect (match-string-no-properties 0)))))
+
 (defun boogie-friends-compute-prover-args ()
   "Compute the set of arguments to pass to the prover."
-  (append (boogie-friends-mode-val 'prover-args)
-          (boogie-friends-mode-val 'prover-custom-args)
-          (unless boogie-friends--prover-running-in-foreground-p (boogie-friends-mode-val 'prover-background-args))
-          (boogie-friends-mode-val 'prover-local-args)
-          boogie-friends--prover-additional-args))
+  (-if-let (run-line-args (and boogie-friends-override-args-with-run-line
+                               (boogie-friends-parse-run-line-prover-args)))
+      run-line-args
+    (append (boogie-friends-mode-val 'prover-args)
+            (boogie-friends-mode-val 'prover-custom-args)
+            (unless boogie-friends--prover-running-in-foreground-p (boogie-friends-mode-val 'prover-background-args))
+            (boogie-friends-mode-val 'prover-local-args)
+            boogie-friends--prover-additional-args)))
 
 (defun boogie-friends-save-or-error ()
   (let ((buf (current-buffer)))
