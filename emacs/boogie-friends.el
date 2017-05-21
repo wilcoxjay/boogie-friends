@@ -208,7 +208,7 @@ greedily (the opening bracket is matched by \\s_).")
 Returns nil if a RUN line is not found or if parsing fails."
   (save-excursion
     (goto-char (point-min))
-    (-when-let (found (ignore-errors (search-forward "// RUN:" (point-at-eol))))
+    (when (ignore-errors (search-forward "// RUN:" (point-at-eol)))
       (cl-loop while (re-search-forward "\\(-\\|/\\)\\S-+" (point-at-eol) t)
                for entry = (match-string-no-properties 0)
                unless (string-match "%" entry)
