@@ -42,7 +42,7 @@
                             "invariant" "modifies" "procedure" "requires" "returns" "type" "unique" "var" "where"))
 
 (defconst boogie-keywords '("assert" "assume" "break" "call" "cast" "div" "else" "exists" "false" "forall" "goto"
-                            "havoc" "if" "lambda" "mod" "old" "return" "then" "true" "while"))
+                            "havoc" "if" "lambda" "mod" "old" "par" "return" "then" "true" "while" "yield"))
 
 (defconst boogie-all-keywords (cl-loop for source in '(boogie-builtins boogie-keywords)
                                        append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
