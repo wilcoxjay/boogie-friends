@@ -656,7 +656,7 @@ Use WINDOWS-BINARY on Windows, and UNIX-BINARY elsewhere."
   "Setup the current buffer for Boogie-related editing.
 If MINIMAL is non-nil, only setup minor modes."
   (unless minimal
-    (set (make-local-variable 'tab-width) 2)
+    (set (make-local-variable 'tab-width) 4)
     (set (make-local-variable 'font-lock-defaults) (list (boogie-friends-mode-var 'font-lock-keywords)))
     (set (make-local-variable 'comment-start) "//")
     (set (make-local-variable 'comment-start-skip) "/[*/]+\\s-*")
