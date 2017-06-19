@@ -209,7 +209,7 @@ Returns nil if a RUN line is not found or if parsing fails."
   (save-excursion
     (goto-char (point-min))
     (when (ignore-errors (search-forward "// RUN:" (point-at-eol)))
-      (cl-loop while (re-search-forward "\\(-\\|/\\)\\S-+" (point-at-eol) t)
+      (cl-loop while (re-search-forward "\\(-\\|/\\)[^ ]+" (point-at-eol) t)
                for entry = (match-string-no-properties 0)
                unless (string-match "%" entry)
                collect entry))))
