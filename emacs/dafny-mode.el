@@ -46,7 +46,7 @@
 
 (defconst dafny-specifiers '("decreases" "ensures" "free" "invariant" "modifies" "reads" "requires"))
 
-(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static"))
+(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static" "twostate"))
 
 (defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
