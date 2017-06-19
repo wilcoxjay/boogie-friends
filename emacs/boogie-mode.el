@@ -41,7 +41,7 @@
 (defconst boogie-builtins '("axiom" "complete" "const" "ensures" "extends" "free" "function" "implementation"
                             "invariant" "modifies" "procedure" "requires" "returns" "type" "unique" "var" "where"))
 
-(defconst boogie-keywords '("assert" "assume" "break" "call" "cast" "div" "else" "exists" "false" "forall" "goto"
+(defconst boogie-keywords '("assert" "assume" "async" "break" "call" "cast" "div" "else" "exists" "false" "forall" "goto"
                             "havoc" "if" "lambda" "mod" "old" "par" "return" "then" "true" "while" "yield"))
 
 (defconst boogie-all-keywords (cl-loop for source in '(boogie-builtins boogie-keywords)
