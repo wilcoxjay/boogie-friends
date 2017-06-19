@@ -254,6 +254,7 @@ Useful to ignore mouse-up events handled mouse-down events."
                 ((looking-at-p ".*{\\s-*\\(//.*\\)?$")                'open)
                 ((looking-at-p ".*}\\s-*\\(//.*\\)?$")                'close)
                 ((looking-at-p ".*;\\s-*\\(//.*\\)?$")                'semicol)
+                ((looking-at-p "\\s-*&&")                             'and)
                 ((looking-at-p dafny-extended-defun-regexp)           'defun)
                 (t                                                    'none))
           (current-indentation))))
@@ -271,6 +272,7 @@ Useful to ignore mouse-up events handled mouse-down events."
          (is-lonely-open (looking-at-p "[ \t]*{"))
          (is-case    (looking-at-p "[ \t]*case"))
          (is-else    (looking-at-p "[ \t]*else"))
+         (is-and     (looking-at-p "\\s-*&&"))
          (comment-beg (save-excursion (comment-beginning))))
     (indent-line-to
      (cond (comment-beg (if (< comment-beg (point-at-bol)) ;; Multiline comment; indent to '*' or beginning of text
@@ -292,12 +294,14 @@ Useful to ignore mouse-up events handled mouse-down events."
                       prev-offset))
            (is-else (or (save-excursion (when (re-search-backward "^\\s-*if" nil t) (current-indentation)))
                         prev-offset))
+           ((and is-and (memq prev-type '(and))) prev-offset)
            (t (pcase prev-type
                 (`comment prev-offset)
                 (`case    (indent-next-tab-stop prev-offset))
                 (`open    (indent-next-tab-stop prev-offset))
                 (`close   prev-offset)
                 (`semicol prev-offset)
+                (`and     prev-offset)
                 (`defun   (indent-next-tab-stop prev-offset))
                 (`none    (if (memq pprev-type '(none defun comment case)) prev-offset (indent-next-tab-stop prev-offset)))
                 (_        prev-offset))))))
