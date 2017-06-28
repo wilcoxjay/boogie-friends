@@ -176,9 +176,14 @@ The transcript file is saved under the name specified in variable
   "The Dafny server inferior process.")
 (defvar-local inferior-dafny--callback nil
   "A function to call after verification completes.")
+(defvar-local inferior-dafny--parse-response t
+  "Whether or not to parse the response before passing it to `inferior-dafny--callback'.")
 
 (defconst inferior-dafny--parent-buffer 'inferior-dafny--parent-buffer
   "Key to put parent buffer under in the server process' plist.")
+
+(defvar-local inferior-dafny--symbols nil
+  "Symbols for the current buffer. Filled out using the server.")
 
 ;;; Initialization
 
@@ -251,7 +256,7 @@ corresponding output buffer is created or recycled."
 The server doesn't recognize this value as special, but we do
 when post-processing errors.")
 
-(defun inferior-dafny-prepare-query ()
+(defun inferior-dafny-prepare-query (verb)
   "Prepare a query to the server."
   (let* ((json-false nil)
          (args  (boogie-friends-compute-prover-args))
@@ -260,21 +265,27 @@ when post-processing errors.")
          (json  (json-encode `(:args ,args :filename ,fname ,@src)))
          (json8 (encode-coding-string json 'utf-8 t))
          (b64   (concat (base64-encode-string json8)))
-         (cmd   (format "%s\n%s\n%s\n" "verify" b64
+         (cmd   (format "%s\n%s\n%s\n" verb b64
                         inferior-dafny-client-eom-tag)))
     (inferior-dafny-debug "Sending [%s] [%s]" b64 cmd)
     cmd))
+
+(defun inferior-dafny-prepare-verify-query ()
+  (inferior-dafny-prepare-query "verify"))
+
+(defun inferior-dafny-prepare-symbols-query ()
+  (inferior-dafny-prepare-query "symbols"))
 
 (defun inferior-dafny-write-snapshot ()
   "Write a snapshot of the current buffer to disk."
   (let ((fname (format-time-string "%F-%H-%M-%S-%N.dfy")))
     (write-region nil nil fname)))
 
-(defun inferior-dafny-update-transcript ()
+(defun inferior-dafny-update-transcript (verb)
   "Log current query to file when appropriate."
   (when inferior-dafny--write-transcript
     (let* ((inferior-dafny--in-memory t)
-           (query (inferior-dafny-prepare-query)))
+           (query (inferior-dafny-prepare-query verb)))
       (append-to-file query nil inferior-dafny--transcript-name))))
 
 (defun inferior-dafny-verify (_checker callback)
@@ -295,13 +306,40 @@ If `inferior-dafny--busy' is non-nil, complain loudly."
     (inferior-dafny-init))
   (setq inferior-dafny--busy (current-time)
         inferior-dafny--callback callback
+        inferior-dafny--parse-response t
         dafny--flycheck-extra nil)
   (if (inferior-dafny-live-p)
       (progn
         (when inferior-dafny--write-snapshots
           (inferior-dafny-write-snapshot))
-        (inferior-dafny-update-transcript)
-        (process-send-string inferior-dafny--process (inferior-dafny-prepare-query)))
+        (inferior-dafny-update-transcript "verify")
+        (process-send-string inferior-dafny--process (inferior-dafny-prepare-verify-query)))
+    (inferior-dafny-callback 'errored "Could not start server")))
+
+(defun inferior-dafny-symbols-callback (status &optional data)
+  (inferior-dafny-debug "symbols callback: [%s] [%s]" status data)
+  (let* ((start (progn (string-match "SYMBOLS_START" data) (match-end 0)))
+         (end (string-match "SYMBOLS_END" data))
+         (json-object-type 'plist)
+         (json-key-type nil)
+         (symbols (json-read-from-string (substring data start end))))
+    (inferior-dafny-debug "symbols: [%s]" symbols)
+    (setq inferior-dafny--symbols symbols)))
+
+(defun inferior-dafny-symbols (callback)
+  (interactive (list #'inferior-dafny-symbols-callback))
+  (when inferior-dafny--busy
+    (error "inferior-dafny-symbols: Dafny server already busy"))
+  (unless (inferior-dafny-live-p)
+    (inferior-dafny-init))
+  (setq inferior-dafny--busy (current-time)
+        inferior-dafny--callback callback
+        inferior-dafny--parse-response nil
+        dafny--flycheck-extra nil)
+    (if (inferior-dafny-live-p)
+        (progn 
+          (inferior-dafny-update-transcript "symbols")
+          (process-send-string inferior-dafny--process (inferior-dafny-prepare-symbols-query)))
     (inferior-dafny-callback 'errored "Could not start server")))
 
 (defmacro inferior-dafny-with-parent-buffer (proc-or-buf &rest body)
@@ -384,7 +422,7 @@ verification was initiated."
   (inferior-dafny-with-parent-buffer proc
     (cond ((equal status "SUCCESS")
            (inferior-dafny-callback
-            'finished (inferior-dafny-parse-errors response)))
+            'finished response))
           (t
            (inferior-dafny-callback
             'errored  response)))))
@@ -425,10 +463,12 @@ the value of variable `buffer-file-name'."
 
 (defun inferior-dafny-parse-errors (response)
   "Parse RESPONSE, extracting error messages."
+  (inferior-dafny-debug "James: [%s]" response)
   (boogie-friends-cleanup-errors
    (inferior-dafny-reset-file-names
     (flycheck-increment-error-columns
      (flycheck-parse-with-patterns response 'dafny (current-buffer))))))
+
 
 (defun inferior-dafny-callback (status &optional data)
   "Forward STATUS and DATA to the currently registered callback.
@@ -437,9 +477,11 @@ This function is called after verification completes; it resets
 `inferior-dafny--busy' and `inferior-dafny--callback' in
 preparation for the next verification."
   (let ((callback inferior-dafny--callback)
+        (parse-data inferior-dafny--parse-response)
         (was-busy inferior-dafny--busy))
     (setq inferior-dafny--busy nil
           inferior-dafny--callback nil
+          inferior-dafny--parse-response t
           dafny--flycheck-extra nil)
     (unless (eq (null was-busy) (null callback))
       (error "Got unexpected status: [%s] [%s]" was-busy callback))
@@ -448,7 +490,7 @@ preparation for the next verification."
               (float-time (time-since was-busy)))
       ;; Careful: The callback may launch another verification.
       ;; We don't want to prevent it, so --busy and --callback must be nil here
-      (funcall callback status data))))
+      (funcall callback status (if parse-data (inferior-dafny-parse-errors data) data)))))
 
 (defun inferior-dafny-debug-callback (status data)
   "Show STATUS and DATA in a debugging buffer."
@@ -494,6 +536,7 @@ If KILL-BUFFER is non-nil, get rid of its output buffer as well."
     (inferior-dafny-callback 'errored "Killed"))
   (setq inferior-dafny--busy nil
         inferior-dafny--callback nil
+        inferior-dafny--parse-response t
         inferior-dafny--process nil
         dafny--flycheck-extra nil))
 

@@ -40,7 +40,7 @@
 (require 'dafny-docs)
 (require 'inferior-dafny)
 
-(defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
+(defconst dafny-defuns '("action" "class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
                          "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
                          "function method" "predicate method"))
 
@@ -217,6 +217,8 @@ Useful to ignore mouse-up events handled mouse-down events."
   (let ((tbl (make-syntax-table)))
     (modify-syntax-entry ?'  "w" tbl)
     (modify-syntax-entry ?_  "w" tbl)
+    (modify-syntax-entry ?<  "." tbl)
+    (modify-syntax-entry ?>  "." tbl)
     ;; Comments
     (modify-syntax-entry ?\n ">" tbl)
     (modify-syntax-entry ?/  "  124" tbl)
@@ -498,6 +500,25 @@ open Dafny buffers."
   (concat (flycheck-mode-line-status-text)
           (or dafny--flycheck-extra "")))
 
+(defun dafny--xref-backend () 'dafny)
+
+(cl-defmethod xref-backend-definitions ((_backend (eql dafny)) identifier)
+  (inferior-dafny-debug "xref-backend-definitions dafny for [%s]" identifier)
+  (inferior-dafny-debug "symbols are [%s]" inferior-dafny--symbols)
+  (-when-let (entries (seq-filter
+                       (lambda (entry)
+                         (and (string-equal (plist-get entry :Name) identifier)
+                              (not (string-equal (plist-get entry :SymbolType) "Call"))))
+                       inferior-dafny--symbols))
+    (mapcar (lambda (entry)
+              (xref-make 
+               identifier 
+               (xref-make-file-location 
+                (buffer-file-name)
+                (plist-get entry :Line)
+                (- (plist-get entry :Column) 1))))
+            entries)))
+
 ;;;###autoload
 (define-derived-mode dafny-mode prog-mode "Dafny"
   "Major mode for editing Dafny programs.
@@ -512,6 +533,7 @@ open Dafny buffers."
   (set (make-local-variable 'indent-line-function) #'dafny-indent-keep-position)
   (set (make-local-variable 'indent-region-function) nil)
   (add-to-list (make-local-variable 'font-lock-extra-managed-props) 'composition)
+  (add-hook 'xref-backend-functions #'dafny--xref-backend nil t)
   (electric-indent-local-mode 1))
 
 (provide 'dafny-mode)
