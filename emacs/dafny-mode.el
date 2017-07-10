@@ -48,7 +48,8 @@
 
 (defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static" "twostate"))
 
-(defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
+(defconst dafny-builtins '("as" "default" "export" "extends" "import" "include" "module" "opened" "provides"
+                           "refines" "returns" "reveals" "yields"))
 
 (defconst dafny-keywords '("assert" "assume" "break" "calc" "case" "else" "exists" "false" "forall" "fresh" "if"
                            "in" "label" "match" "modify" "new" "null" "old" "print" "return" "then" "this"
