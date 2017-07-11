@@ -324,7 +324,8 @@ If `inferior-dafny--busy' is non-nil, complain loudly."
          (json-key-type nil)
          (symbols (json-read-from-string (substring data start end))))
     (inferior-dafny-debug "symbols: [%s]" symbols)
-    (setq inferior-dafny--symbols symbols)))
+    (setq inferior-dafny--symbols symbols)
+    (message "symbols done")))
 
 (defun inferior-dafny-symbols (callback)
   (interactive (list #'inferior-dafny-symbols-callback))
