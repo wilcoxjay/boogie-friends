@@ -52,7 +52,7 @@
                            "refines" "returns" "reveals" "yields"))
 
 (defconst dafny-keywords '("assert" "assume" "break" "calc" "case" "else" "exists" "false" "forall" "fresh" "if"
-                           "in" "label" "match" "modify" "new" "null" "old" "print" "return" "then" "this"
+                           "in" "label" "match" "modify" "new" "null" "old" "print" "return" "reveal" "then" "this"
                            "true" "var" "where" "while" "yield"))
 
 (defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
