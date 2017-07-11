@@ -515,7 +515,7 @@ open Dafny buffers."
               (xref-make 
                identifier 
                (xref-make-file-location 
-                (buffer-file-name)
+                (plist-get entry :File)
                 (plist-get entry :Line)
                 (- (plist-get entry :Column) 1))))
             entries)))
