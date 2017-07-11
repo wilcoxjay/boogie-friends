@@ -111,6 +111,12 @@
       (error ,@header ,(boogie-friends-message-pattern "Verification of "
                                          '(+ (not (any " ")))
                                          " timed out"))
+      (error ,@header ,(boogie-friends-message-pattern
+                        "Verification out of resource ("
+                        '(+ (not (any " ")))
+                        ")"))
+      (error ,@header ,(boogie-friends-message-pattern "Out of resource on"))
+
       (warning ,@header "Warning" ,@colonspace
                ,(boogie-friends-message-pattern))
       (warning ,@header ;; Include "Related location", otherwise message is blank
