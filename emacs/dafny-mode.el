@@ -40,13 +40,13 @@
 (require 'dafny-docs)
 (require 'inferior-dafny)
 
-(defconst dafny-defuns '("action" "class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
+(defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
                          "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
                          "function method" "predicate method"))
 
 (defconst dafny-specifiers '("decreases" "ensures" "free" "invariant" "modifies" "reads" "requires"))
 
-(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static" "twostate"))
+(defconst dafny-modifiers '("action" "inductive" "abstract" "ghost" "protected" "static" "twostate"))
 
 (defconst dafny-builtins '("as" "default" "export" "extends" "import" "include" "module" "opened" "provides"
                            "refines" "returns" "reveals" "yields"))
