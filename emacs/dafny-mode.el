@@ -39,6 +39,7 @@
 (require 'boogie-mode)
 (require 'dafny-docs)
 (require 'inferior-dafny)
+(require 'cl-generic)
 
 (defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
                          "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
@@ -46,19 +47,19 @@
 
 (defconst dafny-specifiers '("decreases" "ensures" "free" "invariant" "modifies" "reads" "requires"))
 
-(defconst dafny-modifiers '("action" "inductive" "abstract" "ghost" "protected" "static" "twostate"))
+(defconst dafny-modifiers '("action" "abstract" "extern" "inductive" "ghost" "protected" "static" "twostate"))
 
 (defconst dafny-builtins '("as" "default" "export" "extends" "import" "include" "module" "opened" "provides"
                            "refines" "returns" "reveals" "yields"))
 
-(defconst dafny-keywords '("assert" "assume" "break" "calc" "case" "else" "exists" "false" "forall" "fresh" "if"
-                           "in" "label" "match" "modify" "new" "null" "old" "print" "return" "reveal" "then" "this"
-                           "true" "var" "where" "while" "yield"))
+(defconst dafny-keywords '("atomic" "assert" "assume" "break" "calc" "case" "commit" "else" "exists" "false" "forall" "fork"
+                           "fresh" "if" "in" "join" "label" "match" "modify" "new" "null" "old" "output" "print" "return"
+                           "reveal" "then" "this" "true" "var" "where" "while" "yield"))
 
 (defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
                         "real" "seq" "set" "string"))
 
-(defconst dafny-block-heads '("calc" "else" "if" "match" "while"))
+(defconst dafny-block-heads '("atomic" "calc" "else" "if" "match" "while"))
 
 (defconst dafny-all-keywords (cl-loop for source in '(dafny-defuns dafny-specifiers dafny-modifiers
                                                       dafny-builtins dafny-keywords dafny-types)
